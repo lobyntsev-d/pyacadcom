@@ -18,18 +18,15 @@ Simple usage example:
 
 .. code-block:: python
 
-from pyacadcom import AutoCAD, acadPoint
+    from pyacadcom import AutoCAD, acadPoint
 
-
-from pyacadcom import AutoCAD, acadPoint
-
-acad=AutoCAD()
-point1 = acadPoint(25, 50, 0)
-nextpoint = (100,100,10)
-point2 = acadPoint(nextpoint)
-acad.ActiveDocument.ModelSpace.AddLine(point1(), point2())
-point3 = point1 + point2
-acad.ActiveDocument.ModelSpace.AddLine(point2(), point3())
+    acad=AutoCAD()
+    point1 = acadPoint(25, 50, 0)
+    nextpoint = (100,100,10)
+    point2 = acadPoint(nextpoint)
+    acad.ActiveDocument.ModelSpace.AddLine(point1(), point2())
+    point3 = point1 + point2
+    acad.ActiveDocument.ModelSpace.AddLine(point2(), point3())
 
 Links
 -----
