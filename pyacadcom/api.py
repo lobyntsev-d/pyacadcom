@@ -7,7 +7,6 @@
     :copyright: (c) 2017 by Dmitriy Lobyntsev
     :licence: BSD
 """
-
 import win32com.client
 
 class AutoCAD:

@@ -7,6 +7,7 @@
     :copyright: (c) 2017 by Dmitriy Lobyntsev
     :licence: BSD
 """
+
 import win32com.client
 import operator
 from pythoncom import VT_R8, VT_ARRAY
