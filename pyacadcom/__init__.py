@@ -4,11 +4,11 @@
 
     AutoCAD automation through COM using pywin32
 
-    :copyright: (c) 2017 by Dmitriy Lobyntsev
+    :copyright: (c) 2021 by Dmitriy Lobyntsev
     :licence: BSD
 """
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 from pyacadcom.api import *
 from pyacadcom.datatype import *
