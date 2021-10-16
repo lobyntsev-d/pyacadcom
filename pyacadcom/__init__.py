@@ -12,3 +12,4 @@ __version__ = "0.0.2"
 
 from pyacadcom.api import *
 from pyacadcom.datatype import *
+from pyacadcom.userinput import *
