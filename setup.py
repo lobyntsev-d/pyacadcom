@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyacadcom',
-    version='0.0.1',
+    version='0.0.2',
     description='Python AutoCAD COM automation via pywin32',
     packages=find_packages(),
     author='Dmitriy Lobyntsev',
@@ -20,7 +20,7 @@ setup(
         "Development Status :: 4 - Beta",
         "Environment :: Win32 (MS Windows)",
         "Intended Audience :: Developers",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.7",
         "Operating System :: Microsoft :: Windows",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Scientific/Engineering",
