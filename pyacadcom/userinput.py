@@ -1,3 +1,16 @@
+"""
+
+    pyacadcom.userinput
+    ******************
+
+    Utilities for AutoCAD automation
+
+    :copyright: (c) 2022 by Dmitriy Lobyntsev
+    :licence: BSD
+
+"""
+
+
 from random import randint
 
 from pythoncom import VT_R8, VT_ARRAY, VT_DISPATCH, VT_BSTR, VT_BYREF, com_error
@@ -5,7 +18,7 @@ from pythoncom import VT_R8, VT_ARRAY, VT_DISPATCH, VT_BSTR, VT_BYREF, com_error
 from .tool import double_from_string, int_from_string
 
 
-def text_input(app, request_type = "str", prompt = "", options = None, default = None):
+def text_input(app, request_type="str", prompt="", options=None, default=None):
     """
     Функция текстового ввода в активном документе
     :param app: экземпляр Autocad
@@ -16,57 +29,55 @@ def text_input(app, request_type = "str", prompt = "", options = None, default =
                     "str_spaced" - строка с пробелами
     :param prompt: текст запроса
     :param options: перечень опций в виде словаря {имя опции: значение, ...}
-    :return: (Resultcode, Resultvalue)
-                Resultcode: тип возвращаемого результата, 1 - введены данные, 2 - введена опция, отрицательные числа - ошибки
+    :return: Resultcode, Resultvalue
+                Resultcode: тип возвращаемого результата:
+                                                1 - введены данные
+                                                2 - введена опция
+                                                -1 - ввод отменен пользователем
                 Resultvalue: возвращаемый результат - данные, имя выбранной опции или описание ошибки
     """
     doc = app.ActiveDocument
     if isinstance(options, dict):
         opt = {}
-        init_string = " ".join([item.replace(" ","") for item in options.values()])
+        init_string = " ".join([item.replace(" ", "") for item in options.values()])
         for key, value in options.items():
             opt[value] = key
         if default is not None:
             opt["@defaultvalue@"] = default
             options[default] = "<"+options[default]+">"
         options_string = " [" + "/".join([item for item in options.values()]) + "]"
-
     else:
         options_string = ""
         init_string = ""
+
     prompt = "\n" + prompt
-    try:
-        doc.Utility.InitializeUserInput(128, init_string)
-    except:
-        return (-2, "Error")
+    doc.Utility.InitializeUserInput(128, init_string)
+
     while True:
         try:
             text = doc.Utility.GetString(1 if request_type == "str_spaced" else 0, prompt + options_string)
             if text == "":
                 text = "@defaultvalue@"
         except com_error as error:
-            if error.hresult == -2147418111:
-                continue
-            errnumber = error.excepinfo[-1] if "excepinfo" in vars(error).keys() else -2
-            if errnumber == -2147352567:
-                doc.Utility.Prompt("Отмена\n")
-                return (-1, "Esc is pressed")
+            if error.hresult == -2147352567:
+                doc.Utility.Prompt("Отменено пользователем/Canceled by user\n")
+                return -1, "Esc is pressed"
             else:
-                return (errnumber, error.excepinfo[2])
+                raise
         if isinstance(options, dict):
             for option in opt.keys():
                 if option.replace(" ","").find(text) != -1:
-                    return (2, opt[option])
+                    return 2, opt[option]
         if request_type == "str" or request_type == "str_spaced":
-            return (1, text)
+            return 1, text
         elif request_type == "int":
             res = int_from_string(text)
             if res[0] >= 0:
-                return (1, res[1])
+                return 1, res[1]
         elif request_type == "double":
             res = double_from_string(text)
             if res[0] >= 0:
-                return (1, res[1])
+                return 1, res[1]
 
 def get_obj(app, obj_type = "all", prompt = ""):
     """
@@ -80,14 +91,17 @@ def get_obj(app, obj_type = "all", prompt = ""):
                         "Arc", "a", "AcDbArc" - дуга
                         ""Mline", "ml", "AcDbMline" - мультилиния
     :param prompt: текст запроса в командной строке
-    :return: (Resultcode, Resultvalue)
-                Resultcode: тип возвращаемого результата, 1 - выбран объект/объекты, отрицательные числа - ошибки
+    :return: Resultcode, Resultvalue
+                Resultcode: тип возвращаемого результата:
+                                                1 - выбран объект/объекты
+                                                -1 - ничего не выбрано
+                                                -2 - нет объектов, соответствующих допустимому типу
                 Resultvalue: возвращаемый результат - список объектов или описание ошибки
     """
     #подключаемся к активному документу
     doc = app.ActiveDocument
     #создаём временный набор и запрашиваем у пользователя добавление в него элементов
-    selset = doc.SelectionSets.Add(str(randint(0, 10000)))
+    selset = doc.SelectionSets.Add(str(randint(0, 100000)))
     doc.Utility.Prompt(prompt)
     selset.SelectOnScreen()
     #создаём список из элементов набора
@@ -97,7 +111,7 @@ def get_obj(app, obj_type = "all", prompt = ""):
     #обрабатываем вариант, при котором ничего не выбрано
     if len(selection) == 0:
         doc.Utility.Prompt("Ничего не выбрано")
-        return (-1, "No choice")
+        return -1, "No choice"
     obj_type = obj_type.lower()
     if obj_type.lower() != "all":
         # приводим названия типов разрешенных лбъектов к каноническому виду
@@ -129,8 +143,8 @@ def get_obj(app, obj_type = "all", prompt = ""):
         selection = [selection[i] for i in items_to_keep]
         #обрабатываем случай, при котором нет элементов удовлетворяющих списку
         if len(selection) == 0:
-            return (-2, "Не выбрано объектов, соответствующих фильтру")
-    return (1, selection)
+            return -2, "Не выбрано объектов, соответствующих фильтру"
+    return 1, selection
 
 def get_keyword(app, prompt = "", options = None, default = None):
     """
@@ -138,8 +152,10 @@ def get_keyword(app, prompt = "", options = None, default = None):
         :param app: экземпляр Autocad
         :param prompt: текст запроса
         :param options: перечень опций в виде словаря {имя опции: значение, ...}
-        :return: (Resultcode, Resultvalue)
-                    Resultcode: тип возвращаемого результата, 2 - введена опция, отрицательные числа - ошибки
+        :return: Resultcode, Resultvalue
+                    Resultcode: тип возвращаемого результата:
+                                                            -1 - ввод отменен пользователем
+                                                            2 - введена опция, отрицательные числа - ошибки
                     Resultvalue: возвращаемый результат - имя выбранной опции или описание ошибки
         """
     doc = app.ActiveDocument
@@ -156,29 +172,24 @@ def get_keyword(app, prompt = "", options = None, default = None):
         options_string = ""
         init_string = ""
     prompt = "\n" + prompt
-    try:
-        doc.Utility.InitializeUserInput(128, init_string)
-    except:
-        return (-2, "Error")
+    doc.Utility.InitializeUserInput(128, init_string)
+
     while True:
         try:
             text = doc.Utility.GetKeyword(prompt + options_string)
             if text == "":
                 text = "@defaultvalue@"
         except com_error as error:
-            if error.hresult == -2147418111:
-                continue
-            errnumber = error.excepinfo[-1] if "excepinfo" in vars(error).keys() else 0
-            if errnumber == -2147352567:
+            if error.hresult == -2147352567:
                 doc.Utility.Prompt("Отмена\n")
-                return (-1, "Esc is pressed")
+                return -1, "Esc is pressed"
             else:
-                return (errnumber, error.excepinfo[2])
+                raise
         for option in opt.keys():
             if option.replace(" ", "").find(text) != -1:
-                return (2, opt[option])
+                return 2, opt[option]
 
-def dist(app, options = None, default = None):
+def dist(app, options=None, default=None):
     """
     Функция для измерения расстояния
     :param app:
@@ -198,10 +209,9 @@ def dist(app, options = None, default = None):
     else:
         options_string = ""
         init_string = ""
-    try:
-        doc.Utility.InitializeUserInput(128, init_string)
-    except:
-        return (-2, "Error")
+
+    doc.Utility.InitializeUserInput(128, init_string)
+
     finish = False
     while not finish:
         try:
@@ -209,21 +219,18 @@ def dist(app, options = None, default = None):
             prevpoint = doc.Utility.GetPoint()
             finish = True
         except com_error as error:
-            errnumber = error.excepinfo[-1] if "excepinfo" in vars(error).keys() else -3
-            if errnumber == -2145320928:
+            if error.hresult == -2145320928:
                 text = doc.Utility.GetInput()
                 if text == "":
                     text = "@defaultvalue@"
-            elif errnumber == -2147352567:
-                return (-2, "Esc is pressed")
-            elif errnumber == -3:
-                return (-3 , "unknown error")
+            elif error.hresult == -2147352567:
+                return -2, "Esc is pressed"
             else:
-                return (error.excepinfo[-1], error.excepinfo[2])
+                raise
             if isinstance(options, dict):
                 for option in opt.keys():
                     if option.replace(" ", "").find(text) != -1:
-                        return (2, opt[option])
+                        return 2, opt[option]
     dist = 0
     finish = False
     while not finish:
@@ -232,19 +239,14 @@ def dist(app, options = None, default = None):
             dist += ((curpoint[0] - prevpoint[0]) ** 2 + (curpoint[1] - prevpoint[1]) ** 2) ** 0.5
             prevpoint = curpoint
         except com_error as error:
-            if error.hresult == -2147418111:
-                continue
-            errnumber = error.excepinfo[-1] if "excepinfo" in vars(error).keys() and error.excepinfo[-1] is not None else -3
-            if errnumber == -2145320928:
+            if error.hresult == -2145320928:
                 key = doc.Utility.GetInput()
                 if key == "" or key.upper() == "В":
                     finish = True
                 else:
                     continue
-            elif errnumber == -2147352567:
-                return (-2, "Esc is pressed")
-            elif errnumber == -3:
-                return (-3, "unknown error")
+            elif error.hresult == -2147352567:
+                return -2, "Esc is pressed"
             else:
-                return (error.excepinfo[-1], error.excepinfo[2])
-    return (1, dist)
+                raise
+    return 1, dist

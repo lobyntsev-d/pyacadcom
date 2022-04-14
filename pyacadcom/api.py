@@ -3,16 +3,178 @@
     ******************
 
     Main AutoCAD object through COM automation using pywin32
-
-    :copyright: (c) 2017 by Dmitriy Lobyntsev
+    :copyright: (c) 2022 by Dmitriy Lobyntsev
     :licence: BSD
+    big thanks to xlwings team for wrapper realisation idea
 """
-import win32com.client
-from pywintypes import com_error
-import time
 
-_DELAY = 0.05  # seconds
-_TIMEOUT = 20.0  # seconds
+import win32com.client
+from pywintypes import com_error, Dispatch, CoClassBaseClass, CDispatch, DispatchEx, DispatchBaseClass
+import types
+from time import sleep
+
+_DELAY = 0.1  # seconds: delay step incremental
+_TIMEOUT = 30.0  # seconds: maximum delay
+_CATCH_ATTRIBUTE_ERRORS = False  # Just for test purposes if pywin32 raises AttributeError instead of COM error
+
+
+class COMRetryMethodWrapper:
+
+    def __init__(self, method):
+        self.__method = method
+
+    def __call__(self, *args, **kwargs):
+        delay_time = 0
+        while delay_time <= _TIMEOUT:
+            try:
+                v = self.__method(*args, **kwargs)
+                if isinstance(v, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                    return COMRetryObjectWrapper(v)
+                elif type(v) is types.MethodType:
+                    return COMRetryMethodWrapper(v)
+                else:
+                    return v
+            except com_error as error:
+                if error.hresult != -2147418111:
+                    raise
+                else:
+                    delay_time += _DELAY
+                    sleep(delay_time)
+            except AttributeError:
+                if _CATCH_ATTRIBUTE_ERRORS:
+                    delay_time += _DELAY
+                    sleep(delay_time)
+
+
+class COMRetryObjectWrapper:
+    def __init__(self, inner):
+        object.__setattr__(self, "_inner", inner)
+
+    def __repr__(self):
+        return repr(self._inner)
+
+    def __setattr__(self, key, value):
+        delay_time = 0
+        while delay_time <= _TIMEOUT:
+            try:
+                return setattr(self._inner, key, value)
+            except com_error as error:
+                if error.hresult != -2147418111:
+                    raise
+                else:
+                    delay_time += _DELAY
+                    sleep(delay_time)
+            except AttributeError:
+                if _CATCH_ATTRIBUTE_ERRORS:
+                    delay_time += _DELAY
+                    sleep(delay_time)
+
+    def __getattr__(self, item):
+        delay_time = 0
+        while delay_time <= _TIMEOUT:
+            try:
+                v = getattr(self._inner, item)
+                if isinstance(v, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                    return COMRetryObjectWrapper(v)
+                elif type(v) is types.MethodType:
+                    return COMRetryMethodWrapper(v)
+                else:
+                    return v
+            except com_error as error:
+                if error.hresult != -2147418111:
+                    raise
+                else:
+                    delay_time += _DELAY
+                    sleep(delay_time)
+            except AttributeError:
+                if _CATCH_ATTRIBUTE_ERRORS:
+                    delay_time += _DELAY
+                    sleep(delay_time)
+
+    def __call__(self, *args, **kwargs):
+        delay_time = 0
+        while delay_time <= _TIMEOUT:
+            try:
+                v = self._inner(*args, **kwargs)
+                if isinstance(v, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                    return COMRetryObjectWrapper(v)
+                elif type(v) is types.MethodType:
+                    return COMRetryMethodWrapper(v)
+                else:
+                    return v
+            except com_error as error:
+                if error.hresult != -2147418111:
+                    raise
+                else:
+                    delay_time += _DELAY
+                    sleep(delay_time)
+            except AttributeError:
+                if _CATCH_ATTRIBUTE_ERRORS:
+                    delay_time += _DELAY
+                    sleep(delay_time)
+
+    def __iter__(self):
+        for v in self._inner:
+            if isinstance(v, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                yield COMRetryObjectWrapper(v)
+            else:
+                yield v
+
+
+class AutoCAD:
+    """
+    Class that represent AutoCAD program via COM
+    """
+    def __init__(self, Visible=True):
+        """
+        Initiation of AutoCAD application
+        :param Visible: States if AutoCAD application to be visible, visible by default
+        """
+        self.__app = COMRetryObjectWrapper(win32com.client.dynamic.Dispatch("AutoCAD.Application"))
+        if Visible:
+            self.__app.Visible = True
+
+    def __repr__(self):
+        return repr(self.__app)
+
+    def __setattr__(self, key, value):
+        return setattr(self.__app, key, value)
+
+    def __getattr__(self, item):
+        return getattr(self.__app, item)
+
+    def __call__(self, *args, **kwargs):
+        return self.__app(*args, **kwargs)
+
+    def __iter__(self):
+        for result in self.__app:
+            yield result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def _com_call_wrapper(f, *args, **kwargs):
@@ -38,7 +200,7 @@ def _com_call_wrapper(f, *args, **kwargs):
                 elif time.time() - start_time >= _TIMEOUT:
                     raise
 
-                time.sleep(_DELAY)
+                sleep(_DELAY)
                 continue
 
             raise
