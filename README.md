@@ -10,8 +10,8 @@ Requires:
 
 Features:
 -----------
-
-- Simplifies work with coordinates (3D points)
+- Solves connection to Autocad COM
+- Simplifies work with coordinates
 
 Simple usage example:
 ---------------------

@@ -1,4 +1,4 @@
-Copyright 2014 Dmitriy Lobyntsev
+Copyright 2022 Dmitriy Lobyntsev
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
