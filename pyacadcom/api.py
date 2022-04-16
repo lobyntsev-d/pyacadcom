@@ -16,6 +16,7 @@ from time import sleep
 
 _DELAY = 0.05  # seconds: default delay step incremental
 _TIMEOUT = 10.0  # seconds: default maximum delay
+_ERRORCODES = [-2147418111, -2147417847, -2147417846]
 
 class COMRetryMethodWrapper:
 
@@ -26,19 +27,22 @@ class COMRetryMethodWrapper:
         delay_time = 0
         while delay_time <= _TIMEOUT:
             try:
-                v = self.__method(*args, **kwargs)
-                if isinstance(v, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
-                    return COMRetryObjectWrapper(v)
-                elif type(v) is MethodType:
-                    return COMRetryMethodWrapper(v)
+                i = self.__method(*args, **kwargs)
+                if isinstance(i, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                    return COMRetryObjectWrapper(i)
+                elif type(i) is MethodType:
+                    return COMRetryMethodWrapper(i)
                 else:
-                    return v
+                    return i
             except com_error as error:
-                if error.hresult != -2147418111:
+                if error.hresult not in _ERRORCODES:
                     raise
                 else:
                     delay_time += _DELAY
                     sleep(delay_time)
+            except AttributeError:
+                delay_time += _DELAY
+                sleep(delay_time)
 
 
 class COMRetryObjectWrapper:
@@ -54,57 +58,68 @@ class COMRetryObjectWrapper:
             try:
                 return setattr(self._inner, key, value)
             except com_error as error:
-                if error.hresult != -2147418111:
+                if error.hresult not in _ERRORCODES:
                     raise
                 else:
                     delay_time += _DELAY
                     sleep(delay_time)
-
+            except AttributeError:
+                delay_time += _DELAY
+                sleep(delay_time)
 
     def __getattr__(self, item):
         delay_time = 0
         while delay_time <= _TIMEOUT:
             try:
-                v = getattr(self._inner, item)
-                if isinstance(v, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
-                    return COMRetryObjectWrapper(v)
-                elif type(v) is MethodType:
-                    return COMRetryMethodWrapper(v)
+                i = getattr(self._inner, item)
+                if isinstance(i, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                    return COMRetryObjectWrapper(i)
+                elif type(i) is MethodType:
+                    return COMRetryMethodWrapper(i)
                 else:
-                    return v
+                    return i
             except com_error as error:
-                if error.hresult != -2147418111:
+                if error.hresult not in _ERRORCODES:
                     raise
                 else:
                     delay_time += _DELAY
                     sleep(delay_time)
-
+            except AttributeError:
+                try:
+                    self._oleobj_.GetIDsOfNames(0, item)
+                except com_error as error:
+                    if error.hresult == -2147352570:
+                        raise
+                delay_time += _DELAY
+                sleep(delay_time)
 
     def __call__(self, *args, **kwargs):
         delay_time = 0
         while delay_time <= _TIMEOUT:
             try:
-                v = self._inner(*args, **kwargs)
-                if isinstance(v, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
-                    return COMRetryObjectWrapper(v)
-                elif type(v) is MethodType:
-                    return COMRetryMethodWrapper(v)
+                i = self._inner(*args, **kwargs)
+                if isinstance(i, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                    return COMRetryObjectWrapper(i)
+                elif type(i) is MethodType:
+                    return COMRetryMethodWrapper(i)
                 else:
-                    return v
+                    return i
             except com_error as error:
-                if error.hresult != -2147418111:
+                if error.hresult not in _ERRORCODES:
                     raise
                 else:
                     delay_time += _DELAY
                     sleep(delay_time)
-
+            except AttributeError:
+                delay_time += _DELAY
+                sleep(delay_time)
 
     def __iter__(self):
-        for v in self._inner:
-            if isinstance(v, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
-                yield COMRetryObjectWrapper(v)
+        for i in self._inner:
+            if isinstance(i, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                yield COMRetryObjectWrapper(i)
             else:
-                yield v
+                yield i
 
 
 class AutoCAD:
@@ -133,5 +148,6 @@ class AutoCAD:
         return self._inner(*args, **kwargs)
 
     def __iter__(self):
-        for result in self._inner:
-            yield result
+        for i in self._inner:
+            yield i
+
