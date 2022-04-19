@@ -1,7 +1,7 @@
 pyacadcom - Pyton automation of AutoCAD
 ------
 Pyton scripts coding for AutoCAD via ActiveX Automation  
-v.0.0.8
+v.0.0.9
 
 Requires:
 ------
@@ -34,6 +34,8 @@ Links
 
 Version history
 ------
+0.0.9: new types added for wrapping
+
 0.0.8: fix attribute errors cases
 
 0.0.7: new COM wrapper

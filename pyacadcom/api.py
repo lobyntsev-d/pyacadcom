@@ -8,15 +8,16 @@
     big thanks to xlwings team for wrapper realisation idea
 """
 
-from win32com.client.dynamic import Dispatch
-from win32com.client import CDispatch, CoClassBaseClass, DispatchBaseClass
+from win32com.client.dynamic import CDispatch as dynCDispatch
+from win32com.client import Dispatch, CDispatch, CoClassBaseClass, DispatchBaseClass, Constants, EventsProxy
 from pywintypes import com_error
 from types import MethodType
 from time import sleep
 
 _DELAY = 0.05  # seconds: default delay step incremental
-_TIMEOUT = 10.0  # seconds: default maximum delay
+_TIMEOUT = 15.0  # seconds: default maximum delay
 _ERRORCODES = [-2147418111, -2147417847, -2147417846]
+_TYPES_TO_WRAP = (CDispatch, CoClassBaseClass, DispatchBaseClass, dynCDispatch, Constants, EventsProxy)
 
 class COMRetryMethodWrapper:
 
@@ -28,7 +29,7 @@ class COMRetryMethodWrapper:
         while delay_time <= _TIMEOUT:
             try:
                 i = self.__method(*args, **kwargs)
-                if isinstance(i, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                if isinstance(i, _TYPES_TO_WRAP):
                     return COMRetryObjectWrapper(i)
                 elif type(i) is MethodType:
                     return COMRetryMethodWrapper(i)
@@ -72,7 +73,7 @@ class COMRetryObjectWrapper:
         while delay_time <= _TIMEOUT:
             try:
                 i = getattr(self._inner, item)
-                if isinstance(i, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                if isinstance(i, _TYPES_TO_WRAP):
                     return COMRetryObjectWrapper(i)
                 elif type(i) is MethodType:
                     return COMRetryMethodWrapper(i)
@@ -98,7 +99,7 @@ class COMRetryObjectWrapper:
         while delay_time <= _TIMEOUT:
             try:
                 i = self._inner(*args, **kwargs)
-                if isinstance(i, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+                if isinstance(i, _TYPES_TO_WRAP):
                     return COMRetryObjectWrapper(i)
                 elif type(i) is MethodType:
                     return COMRetryMethodWrapper(i)
@@ -116,7 +117,7 @@ class COMRetryObjectWrapper:
 
     def __iter__(self):
         for i in self._inner:
-            if isinstance(i, (CDispatch, CoClassBaseClass, DispatchBaseClass)):
+            if isinstance(i, _TYPES_TO_WRAP):
                 yield COMRetryObjectWrapper(i)
             else:
                 yield i

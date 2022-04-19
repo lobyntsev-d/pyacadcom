@@ -8,7 +8,7 @@
     :licence: BSD
 """
 
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 
 from pyacadcom.api import *
 from pyacadcom.datatype import *
