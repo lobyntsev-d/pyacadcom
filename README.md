@@ -16,15 +16,18 @@ Features:
 Simple usage example:
 ------
 ```Python
-    from pyacadcom import AutoCAD, acadPoint
+    from pyacadcom import AutoCAD, AcadPoint
     acad=AutoCAD()
-    point1 = acadPoint(25, 50, 0)
+    point1 = AcadPoint(25, 50, 0)
     nextpoint = (100,100,10)
-    point2 = acadPoint(nextpoint)
+    point2 = AcadPoint(nextpoint)
     acad.ActiveDocument.ModelSpace.AddLine(point1(), point2())
     point3 = point1 + point2
     acad.ActiveDocument.ModelSpace.AddLine(point2(), point3())
+
 ```
+AcadPoint() is equal to AcadPoint.coordinates and returns variant array of doubles of x, y, z coordinates
+AcadPoint.coordinates2D returns variant array of doubles of x, y coordinates
 
 Links
 ------
@@ -34,6 +37,10 @@ Links
 
 Version history
 ------
+0.0.10:
+- class AcadPoint renamed to AcadPoint
+- property coordinates2D is added to AcadPoint class
+
 0.0.9: new types added for wrapping
 
 0.0.8: fix attribute errors cases
@@ -48,6 +55,6 @@ Version history
 
 0.0.3: service methods
 
-0.0.2: acadPoint class
+0.0.2: AcadPoint class
 
 0.0.1: first release

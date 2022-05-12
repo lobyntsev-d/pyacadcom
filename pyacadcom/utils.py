@@ -26,8 +26,8 @@ def correct_point(obj):
 def distance(point1, point2):
     """
     Function to calculate distance between two points in 3D Decart's system
-    :param point1: acadPoint object or coordinates as list [x,y,z] or tuple (x,y,z)
-    :param point2: acadPoint object or coordinates as list [x,y,z] or tuple (x,y,z)
+    :param point1: AcadPoint object or coordinates as list [x,y,z] or tuple (x,y,z)
+    :param point2: AcadPoint object or coordinates as list [x,y,z] or tuple (x,y,z)
     :return: distance between point1 and point2
     """
     if not correct_point(point1) or not correct_point(point2):
