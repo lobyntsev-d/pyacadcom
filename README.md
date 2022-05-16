@@ -1,7 +1,7 @@
 pyacadcom - Pyton automation of AutoCAD
 ------
 Pyton scripts coding for AutoCAD via ActiveX Automation  
-v.0.0.9
+v.0.0.10
 
 Requires:
 ------
@@ -17,7 +17,7 @@ Simple usage example:
 ------
 ```Python
     from pyacadcom import AutoCAD, AcadPoint
-    acad=AutoCAD()
+    acad = AutoCAD()
     point1 = AcadPoint(25, 50, 0)
     nextpoint = (100,100,10)
     point2 = AcadPoint(nextpoint)
@@ -38,7 +38,7 @@ Links
 Version history
 ------
 0.0.10:
-- class AcadPoint renamed to AcadPoint
+- class acadPoint renamed to AcadPoint
 - property coordinates2D is added to AcadPoint class
 
 0.0.9: new types added for wrapping
